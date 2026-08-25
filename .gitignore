@@ -1,0 +1,23 @@
+# Firebase credentials
+src/main/resources/firebase-service-account.json
+
+# Environment files
+.env
+.env.*
+
+# Maven
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Logs
+*.log

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Created</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f7f7f7; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #4CAF50; }
+        p { line-height: 1.6; }
+        .button { display: inline-block; background-color: #4CAF50; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { font-size: 12px; color: #777; margin-top: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Welcome, <span th:text="${name}">User</span>!</h1>
+    <p>Your account has been successfully created.</p>
+    <p><strong>Email:</strong> <span th:text="${email}">email@example.com</span></p>
+    <p><strong>Password:</strong> <span th:text="${password}">yourpassword</span></p>
+    <p>Please change your password after your first login.</p>
+    <a href="#" class="button">Login Now</a>
+    <div class="footer">
+        &copy; 2026 Support Team. All rights reserved.
+    </div>
+</div>
+</body>
+</html>
