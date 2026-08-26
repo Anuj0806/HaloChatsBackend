@@ -5,18 +5,11 @@ import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
-
-    private final SpringTemplateEngine templateEngine;
 
     @Value("${resend.api-key}")
     private String resendApiKey;
@@ -24,12 +17,6 @@ public class EmailService {
     @Value("${resend.from}")
     private String fromEmail;
 
-    @Async
-    @Retryable(
-            retryFor = RuntimeException.class,
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 2000)
-    )
     public void sendOtpEmail(
             String toEmail,
             String subject,
@@ -39,38 +26,73 @@ public class EmailService {
 
         try {
 
-            // Create Resend client
+            System.out.println("=================================");
+            System.out.println("Starting OTP email");
+            System.out.println("To: " + toEmail);
+            System.out.println("From: " + fromEmail);
+            System.out.println("API key configured: "
+                    + (resendApiKey != null && !resendApiKey.isBlank()));
+            System.out.println("=================================");
+
             Resend resend = new Resend(resendApiKey);
 
-            // Thymeleaf context
-            Context context = new Context();
+            String html = """
+                    <html>
+                    <body>
+                        <h2>Hello %s</h2>
+                        <p>Your Halo Chat verification code is:</p>
 
-            context.setVariable("name", name);
-            context.setVariable("expiryMinutes", 10);
-            context.setVariable("otp", otp);
+                        <h1>%s</h1>
 
-            // Process Thymeleaf HTML template
-            String htmlContent =
-                    templateEngine.process("otp-email", context);
+                        <p>This OTP expires in 10 minutes.</p>
 
-            // Create email
-            CreateEmailOptions params = CreateEmailOptions.builder()
-                    .from(fromEmail)
-                    .to(toEmail)
-                    .subject(subject)
-                    .html(htmlContent)
-                    .build();
+                        <p>If you did not request this code, ignore this email.</p>
+                    </body>
+                    </html>
+                    """.formatted(name, otp);
 
-            // Send email through Resend
+            CreateEmailOptions params =
+                    CreateEmailOptions.builder()
+                            .from(fromEmail)
+                            .to(toEmail)
+                            .subject(subject)
+                            .html(html)
+                            .build();
+
             CreateEmailResponse response =
                     resend.emails().send(params);
 
             System.out.println(
-                    "OTP email sent successfully. Resend ID: "
-                            + response.getId()
+                    "================================="
+            );
+
+            System.out.println(
+                    "RESEND EMAIL SUCCESS"
+            );
+
+            System.out.println(
+                    "Resend ID: " + response.getId()
+            );
+
+            System.out.println(
+                    "================================="
             );
 
         } catch (Exception e) {
+
+            System.err.println(
+                    "================================="
+            );
+
+            System.err.println(
+                    "RESEND EMAIL FAILED"
+            );
+
+            e.printStackTrace();
+
+            System.err.println(
+                    "================================="
+            );
 
             throw new RuntimeException(
                     "Failed to send OTP email to " + toEmail,
@@ -79,4 +101,3 @@ public class EmailService {
         }
     }
 }
-
