@@ -1,8 +1,10 @@
 package com.example.chatapp.service.emailService;
 
+import com.resend.Resend;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
@@ -10,62 +12,71 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import jakarta.mail.internet.MimeMessage;
-
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    @Async
-    @Retryable(value = { RuntimeException.class }, maxAttempts = 3, backoff = @Backoff(delay = 2000))
-    public void sendAccountEmail(String toEmail, String subject, String name, String email, String password) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    @Value("${resend.api-key}")
+    private String resendApiKey;
 
-            Context context = new Context();
-            context.setVariable("name", name);
-            context.setVariable("email", email);
-            context.setVariable("password", password);
-
-            String htmlContent = templateEngine.process("account-created.html", context);
-
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send email to " + toEmail, e);
-        }
-    }
-
-
+    @Value("${resend.from}")
+    private String fromEmail;
 
     @Async
-    @Retryable(value = { RuntimeException.class }, maxAttempts = 3, backoff = @Backoff(delay = 2000))
-    public void sendOtpEmail(String toEmail, String subject, String name, String otp) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    @Retryable(
+            retryFor = RuntimeException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 2000)
+    )
+    public void sendOtpEmail(
+            String toEmail,
+            String subject,
+            String name,
+            String otp
+    ) {
 
+        try {
+
+            // Create Resend client
+            Resend resend = new Resend(resendApiKey);
+
+            // Thymeleaf context
             Context context = new Context();
+
             context.setVariable("name", name);
             context.setVariable("expiryMinutes", 10);
             context.setVariable("otp", otp);
 
-            String htmlContent = templateEngine.process("otp-email.html", context);
+            // Process Thymeleaf HTML template
+            String htmlContent =
+                    templateEngine.process("otp-git .html", context);
 
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true);
+            // Create email
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(fromEmail)
+                    .to(toEmail)
+                    .subject(subject)
+                    .html(htmlContent)
+                    .build();
 
-            mailSender.send(message);
+            // Send email through Resend
+            CreateEmailResponse response =
+                    resend.emails().send(params);
+
+            System.out.println(
+                    "OTP email sent successfully. Resend ID: "
+                            + response.getId()
+            );
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send email to " + toEmail, e);
+
+            throw new RuntimeException(
+                    "Failed to send OTP email to " + toEmail,
+                    e
+            );
         }
     }
 }
+
