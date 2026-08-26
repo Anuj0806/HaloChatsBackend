@@ -51,7 +51,7 @@ public class EmailService {
 
             // Process Thymeleaf HTML template
             String htmlContent =
-                    templateEngine.process("otp-git .html", context);
+                    templateEngine.process("otp-email", context);
 
             // Create email
             CreateEmailOptions params = CreateEmailOptions.builder()
