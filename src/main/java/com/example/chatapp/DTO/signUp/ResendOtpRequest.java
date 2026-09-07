@@ -9,4 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResendOtpRequest {
     private String email;
+
+    private String otp;
 }

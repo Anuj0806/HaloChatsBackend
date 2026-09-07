@@ -63,13 +63,13 @@ public class UserServiceSignupImpl implements UserServiceSignup {
         // Registration leaves the account unverified - immediately issue an
         // OTP so the frontend can go straight from the signup form to a
         // "verify your email" screen without a separate button press.
-        sendOtp(user);
+        sendOtp(user,request.getOtp());
     }
 
-    private void sendOtp(UserSignup user) {
+    private void sendOtp(UserSignup user,String otp) {
         emailOtpRepository.invalidateOldOtps(user.getEmail());
 
-        String otp = allMethod.generateOtp();
+       // String otp = allMethod.generateOtp();
 
         EmailOtp emailOtp = EmailOtp.builder()
                 .userSignup(user)
@@ -80,12 +80,12 @@ public class UserServiceSignupImpl implements UserServiceSignup {
 
         emailOtpRepository.save(emailOtp);
 
-        emailService.sendOtpEmail(
-                user.getEmail(),
-                "Verify your account",
-                user.getName(),
-                otp
-        );
+//        emailService.sendOtpEmail(
+//                user.getEmail(),
+//                "Verify your account",
+//                user.getName(),
+//                otp
+//        );
     }
 
     @Override
@@ -126,7 +126,7 @@ public class UserServiceSignupImpl implements UserServiceSignup {
         UserSignup user = userRepositorySignup.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("User not found"));
 
-        sendOtp(user);
+        sendOtp(user,request.getOtp());
     }
 
 }

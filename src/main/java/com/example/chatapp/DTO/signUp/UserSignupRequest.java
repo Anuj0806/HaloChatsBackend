@@ -20,6 +20,8 @@ public class UserSignupRequest {
 
     private String city;
 
+    String otp;
+
     // The user picks this themselves now - the backend no longer generates
     // and emails a password. Confirm-password matching is a frontend-only
     // concern; the backend only ever sees the one final value.
